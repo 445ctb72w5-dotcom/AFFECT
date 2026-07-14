@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>⍨</title>
+<style>
+:root{
+--bg:#050505;--card:#111;
+--red:#ff6b6b;--green:#75ff92;--grey:#d8d8d8;--blue:#64a9ff;--pink:#ff79b0;--yellow:#ffd95a;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:var(--bg);color:#fff;}
+#app{max-width:700px;margin:auto;min-height:100vh;padding:24px;}
+#home{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center}
+#home.hidden{display:none}
+h1{text-align:center;font-size:3rem;margin:48px 0}
+button{width:100%;padding:18px;border-radius:18px;background:rgba(255,255,255,.03);
+font-size:1.2rem;cursor:pointer;margin:12px 0;border:2px solid;color:#fff}
+.red{border-color:var(--red);color:var(--red);box-shadow:0 0 12px #ff6b6b55,inset 0 0 10px #ff6b6b22}
+.green{border-color:var(--green);color:var(--green);box-shadow:0 0 12px #75ff9255,inset 0 0 10px #75ff9222}
+.grey{border-color:var(--grey);color:var(--grey);box-shadow:0 0 10px #ffffff33,inset 0 0 8px #ffffff11}
+.blue{border-color:var(--blue);color:var(--blue);box-shadow:0 0 12px #64a9ff55,inset 0 0 10px #64a9ff22}
+.pink{border-color:var(--pink);color:var(--pink);box-shadow:0 0 12px #ff79b055,inset 0 0 10px #ff79b022}
+.yellow{border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 12px #ffd95a55,inset 0 0 10px #ffd95a22}
+.hidden{display:none}
+.top{display:flex;align-items:center;gap:12px;margin-top:8px}
+.back{width:auto;padding:8px 0;border:none;background:none;box-shadow:none;font-size:1.1rem;color:#fff}
+.result{min-height:100vh;padding:24px}
+.result.red{background:radial-gradient(circle,#ff6b6b33,#050505 75%)}
+.result.green{background:radial-gradient(circle,#75ff9233,#050505 75%)}
+.result.grey{background:radial-gradient(circle,#ffffff18,#050505 75%)}
+.result.blue{background:radial-gradient(circle,#64a9ff33,#050505 75%)}
+.result.pink{background:radial-gradient(circle,#ff79b033,#050505 75%)}
+.result.yellow{background:radial-gradient(circle,#ffd95a33,#050505 75%)}
+.subtitle{text-align:center;font-size:1.6rem;margin-top:70px;color:#ddd}
+.feel{font-size:4rem;text-align:center;margin:12px 0 36px}
+.custom-text{margin-top:100px;overflow-wrap:anywhere}
+label{display:block;margin-bottom:10px;font-size:1.1rem}
+#note-area{margin-top:72px}
+textarea{width:100%;height:180px;background:#101010;color:#fff;border:2px solid currentColor;border-radius:18px;padding:16px;font-size:1rem}
+.custom-input{width:100%;padding:18px;background:#101010;color:#fff;border:2px solid var(--yellow);border-radius:18px;font-size:1.2rem}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="home">
+<button class="red" onclick="openCat('Unpleasant')">☹ Unpleasant</button>
+<button class="green" onclick="openCat('Pleasant')">☺ Pleasant</button>
+<button class="grey" onclick="openCat('Neutral')">◯ Neutral</button>
+<button class="pink" onclick="openCat('Relationship')">♥ Relationship</button>
+<button class="blue" onclick="openCat('Other')">? Other</button>
+<button class="yellow" onclick="openCat('Custom')">✎ Custom</button>
+</div>
+
+<div id="list" class="hidden">
+<div class="top"><button class="back" onclick="backList()">← Back</button></div>
+<h1 id="title"></h1>
+<div id="items"></div>
+</div>
+
+<div id="detail" class="result hidden">
+<div class="top"><button class="back" onclick="backList()">← Back</button></div>
+<div class="subtitle" id="subtitle">I'm feeling...</div>
+<div id="selected" class="feel"></div>
+<div id="note-area">
+<label>Why?</label>
+<textarea placeholder="Tap here to type..."></textarea>
+</div>
+</div>
+</div>
+
+<script>
+const data={
+Unpleasant:{
+Anxious:["Worried","Panicked","Restless","Overwhelmed"],
+Angry:["Frustrated","Irritated","Furious","Bitter"],
+Sad:["Lonely","Grieving","Hopeless","Rejected"]
+},
+Pleasant:{
+Happy:["Joyful","Cheerful","Playful","Content"],
+Loved:["Accepted","Connected","Supported","Cared For"],
+Calm:["Relaxed","Peaceful","Grounded","Safe"]
+},
+Neutral:{
+Okay:["Fine","Steady","Normal"],
+Thinking:["Reflective","Curious","Unsure"],
+Tired:["Sleepy","Low Energy","Drained"]
+},
+Other:{
+Physical:["Hungry","Thirsty","Pain","Nauseous","Too Hot","Too Cold"],
+Needs:["Quiet","Space","Help","Medication","Toilet","Water","Hug"],
+Phrases:["Yes","No","Maybe","Hey","Thanks","How are you?","Can we talk?","I'm listening","I understand","I love you","I'm sorry","See you later","Don't go","I forgive you"]
+},
+Relationship:{
+Physical:["Snuggle","Cuddle","Kiss","Sex"],
+Time:["Watch TV together","Play music with you","Sit together","Have a quiet evening","Come with you"],
+Space:["Stay home","Have 'Me' time","Recharge","Go for a walk"],
+Events:["Go for a drive","Go out together","Go to the aquarium","Go to the zoo","Feed the birds","See family","See friends"]
+},
+Custom:{
+Custom:[]
+}
+};
+let cat="",mode="group",currentGroup="";
+const colors={Unpleasant:"red",Pleasant:"green",Neutral:"grey",Other:"blue",Relationship:"pink",Custom:"yellow"};
+function openCat(c){
+cat=c;
+if(c==="Custom"){
+home.classList.add("hidden");
+detail.classList.add("hidden");
+list.classList.remove("hidden");
+currentGroup="Custom";
+mode="custom";
+showLeaves();
+return;
+}
+mode="group";showGroups();
+}
+function showGroups(){
+mode="group";
+home.classList.add("hidden");detail.classList.add("hidden");list.classList.remove("hidden");
+title.textContent=cat;items.innerHTML="";
+Object.keys(data[cat]).forEach(g=>{
+let b=document.createElement("button");
+b.className=colors[cat];
+b.textContent=g;
+b.onclick=()=>{currentGroup=g;showLeaves();};
+items.appendChild(b);
+});
+}
+function showLeaves(){
+if(cat!=="Custom")mode="leaf";
+title.textContent=currentGroup;items.innerHTML="";
+if(cat==="Custom" && currentGroup==="Custom"){
+let input=document.createElement("input");
+input.className="custom-input";
+input.placeholder="Type anything...";
+input.maxLength=80;
+let submit=document.createElement("button");
+submit.className="yellow";
+submit.textContent="Show";
+const showCustom=()=>{const text=input.value.trim();if(text)showFeeling(text,"yellow","",true);};
+submit.onclick=showCustom;
+input.onkeydown=e=>{if(e.key==="Enter")showCustom();};
+items.append(input,submit);
+input.focus();
+return;
+}
+data[cat][currentGroup].forEach(f=>{
+let b=document.createElement("button");
+b.className=colors[cat];
+b.textContent=f;
+b.onclick=()=>showFeeling(f);
+items.appendChild(b);
+});
+}
+function showFeeling(f,color=colors[cat],headingOverride="",isCustom=false){
+list.classList.add("hidden");
+detail.className="result "+color;
+detail.classList.remove("hidden");
+const isPhrase=cat==="Other" && currentGroup==="Phrases";
+document.getElementById("subtitle").classList.toggle("hidden",isCustom||isPhrase);
+document.getElementById("note-area").classList.toggle("hidden",isCustom);
+
+const heading = isCustom ? "" : headingOverride || (cat === "Other" && currentGroup === "Needs"
+    ? "I need..."
+    : cat === "Other" && currentGroup === "Phrases"
+        ? ""
+        : cat === "Relationship"
+            ? "I'd like to..."
+        : "I'm feeling...");
+
+document.getElementById("subtitle").textContent = heading;
+const selected=document.getElementById("selected");
+selected.textContent=f;
+selected.classList.toggle("custom-text",isCustom);
+selected.style.fontSize=isCustom
+    ? `${Math.max(2.1,Math.min(4,4.5-Math.max(0,f.length-8)*0.065))}rem`
+    : "";
+
+detail.style.color =
+getComputedStyle(document.documentElement)
+.getPropertyValue("--"+color);
+}
+function backList(){if(mode==="leaf"){showGroups()}else{goHome()}}
+function goHome(){
+home.classList.remove("hidden");
+list.classList.add("hidden");
+detail.className="result hidden";
+}
+</script>
+</body>
+</html>
